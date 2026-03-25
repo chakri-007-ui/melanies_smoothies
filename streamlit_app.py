@@ -1,35 +1,34 @@
 import streamlit as st
+import requests
 from snowflake.snowpark.functions import col
-st.title('My Parents New Healthy Diner')
+
 st.title(":cup_with_straw: Customize Your Smoothie! :cup_with_straw:")
 st.write("Choose the fruits you want in your custom Smoothie!")
-import streamlit as st
 
-title = st.text_input("Movie title", "Life of Brian")
-st.write("The current movie title is", title)
+name_on_order = st.text_input("Name on Order")
+
 cnx = st.connection("snowflake")
 session = cnx.session()
 my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME'))
- 
+
 ingredients_list = st.multiselect(
     'Choose up to 5 ingredients:',
-    my_dataframe
-    ,max_selections=5
+    my_dataframe,
+    max_selections=5
 )
- 
- 
+
 if ingredients_list:
     ingredients_string = ''
-
     for fruit_chosen in ingredients_list:
         ingredients_string += fruit_chosen + ' '
         st.subheader(fruit_chosen + ' Nutrition Information')
         smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/" + fruit_chosen)
         sf_df = st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
 
-submitted = st.button('Submit')
- 
-if submitted:
-    st.success("Someone clicked the button.", icon="👉")
-import requests
-smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon")
+    submitted = st.button('Submit Order')
+    if submitted:
+        session.sql(
+            "INSERT INTO smoothies.public.orders (ingredients, name_on_order) VALUES ('"
+            + ingredients_string + "', '" + name_on_order + "')"
+        ).collect()
+        st.success('Your Smoothie is ordered, ' + name_on_order + '!', icon="✅")
