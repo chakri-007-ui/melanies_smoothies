@@ -29,3 +29,7 @@ submitted = st.button('Submit')
  
 if submitted:
     st.success("Someone clicked the button.", icon="👉")
+
+import requests  
+smoothiefroot_response = requests.get("[https://my.smoothiefroot.com/api/fruit/watermelon](https://my.smoothiefroot.com/api/fruit/watermelon)")  
+st.text(smoothiefroot_response)
